@@ -153,7 +153,8 @@ import re
 def load_word_data():
     regex = re.compile('^[a-z]{4}$')
     with open('/usr/share/dict/words') as word_file:
-        # Caution: this list should be locked down in 'production' tests!
+        # In production code, this list would be locked down to provide
+        # absolute control over tests
         four_letter_words = filter(
             regex.match, map(str.strip, word_file.readlines()))
     return tuple(four_letter_words)
