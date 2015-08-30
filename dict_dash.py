@@ -220,13 +220,10 @@ class TestDictionaryDash(TestCase):
         self.assertEqual(similar_words, {'held', 'hell', 'helm'})
 
     def test_simple_ladder(self):
-        solution = find_shortest_solution(
-            'helm', 'help', self.wil)
+        solution = find_shortest_solution('helm', 'help', self.wil)
         self.assertEqual(solution, ('helm', 'help'))
 
     def test_reverse_problem_len_equal(self):
-        rungs_a = find_shortest_solution(
-            'bean', 'barn', self.wil)
-        rungs_b = find_shortest_solution(
-            'barn', 'bean', self.wil)
+        rungs_a = find_shortest_solution('bean', 'barn', self.wil)
+        rungs_b = find_shortest_solution('barn', 'bean', self.wil)
         self.assertEqual(len(rungs_a), len(rungs_b))
