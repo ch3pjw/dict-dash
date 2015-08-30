@@ -22,9 +22,11 @@ def cache(func):
 
     @wraps(func)
     def wrapped(*args, **kwargs):
-        # Note: Python does not have a built in frozendict. In production, we'd
-        # implment our own for caching the intermediate data structure, but for
-        # this, we'll just check the IDs in the kwargs.
+        # Note: Python does not have a built in frozendict. In production, I'd
+        # use something like pyrsistent.map to make the intermediate data
+        # structure hashable and therefore safely cacheable, but for this,
+        # we'll just check the IDs in the kwargs, pass mutables by keyword and
+        # trust the caller not to change them.
         kwarg_ids = frozenset(starmap(lambda k, v: (k, id(v)), kwargs.items()))
         cache_id = args, kwarg_ids
         try:
