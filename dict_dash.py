@@ -80,10 +80,14 @@ def generate_next_leaf_nodes(nodes, used_words, wil):
     '''Lazily produces new tree nodes that are evolved from the current leaf
     nodes.
     '''
+    # Note: We can filter out words that we've previously used from the similar
+    # words, because any (newer) solution evolved from the used word would by
+    # definition be longer than the one containing the original use of the
+    # word.
+    # Note: Filtering benchmarked quicker than set difference
     for node in nodes:
         for i, letter in enumerate(node.value):
-            similar_words = find_similar_words(
-                node.value, i, wil=wil)
+            similar_words = find_similar_words(node.value, i, wil=wil)
             yield from map(
                 lambda sw: Node(sw, parent=node),
                 filter(lambda sw: sw not in used_words, similar_words))
