@@ -112,19 +112,25 @@ def generate_shortest_solution(start, end, wli):
 def main(word_file):
     words, pairs = parse_input(word_file)
     wli = get_words_by_letter_and_index(words)
+    failed = False
     for pair in pairs:
         try:
             solution = generate_shortest_solution(*pair, wli=wli)
         except ValueError as e:
             print(e.args[0], file=sys.stderr)
             print(-1)
+            failed = True
         else:
             print(' -> '.join(solution), file=sys.stderr)
             print(len(solution) - 1)
+    return failed
 
 
 if __name__ == '__main__':
-    main(sys.stdin)
+    failed = main(sys.stdin)
+    if failed:
+        sys.exit('Did not find solutions to all word pairs')
+
 
 
 from unittest import TestCase
