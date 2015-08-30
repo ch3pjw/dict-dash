@@ -121,7 +121,7 @@ def find_shortest_solution(start_word, end_word, wil):
                 'No solutions for {!r} -> {!r}'.format(start_word, end_word))
 
 
-def main(word_file):
+def main(word_file, stdout, stderr):
     words, pairs = parse_input(word_file)
     wil = build_words_by_indexed_letter(words)
     failed = False
@@ -129,17 +129,17 @@ def main(word_file):
         try:
             solution = find_shortest_solution(*pair, wil=wil)
         except ValueError as e:
-            print(e.args[0], file=sys.stderr)
-            print(-1)
+            print(e.args[0], file=stderr)
+            print(-1, file=stdout)
             failed = True
         else:
-            print(' -> '.join(solution), file=sys.stderr)
-            print(len(solution) - 1)
+            print(' -> '.join(solution), file=stderr)
+            print(len(solution) - 1, file=stdout)
     return failed
 
 
 if __name__ == '__main__':
-    failed = main(sys.stdin)
+    failed = main(sys.stdin, sys.stdout, sys.stderr)
     if failed:
         sys.exit('Did not find solutions to all word pairs')
 
