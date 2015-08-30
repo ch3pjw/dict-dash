@@ -1,7 +1,28 @@
 import sys
+from functools import wraps
+from itertools import starmap
 from collections import defaultdict, namedtuple
 
 Node = namedtuple('Node', ('value', 'parent'))
+
+
+def cache(func):
+    results_by_args = {}
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        # Note: Python does not have a built in frozendict. In production, we'd
+        # implment our own for caching the intermediate data structure, but for
+        # this, we'll just check the IDs in the kwargs.
+        kwarg_ids = frozenset(starmap(lambda k, v: (k, id(v)), kwargs.items()))
+        cache_id = args, kwarg_ids
+        try:
+            return results_by_args[cache_id]
+        except KeyError:
+            result = func(*args, **kwargs)
+            results_by_args[cache_id] = result
+            return result
+    return wrapped
 
 
 def parse_input(f):
@@ -22,6 +43,7 @@ def get_words_by_letter_and_index(words):
     return words_by_letter_and_index
 
 
+@cache
 def find_similar_words(word, index, words_by_letter_and_index):
     '''Finds all the words in our structured data who's index-th letter only is
     different from the given word
@@ -41,7 +63,8 @@ def generate_next_rung(nodes, used_words, wli):
     new_nodes = []
     for node in nodes:
         for i, letter in enumerate(node.value):
-            similar_words = find_similar_words(node.value, i, wli)
+            similar_words = find_similar_words(
+                node.value, i, words_by_letter_and_index=wli)
             new_nodes.extend(map(
                 lambda sw: Node(sw, parent=node),
                 filter(lambda sw: sw not in used_words, similar_words)))
