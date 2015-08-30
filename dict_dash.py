@@ -117,6 +117,7 @@ def main(word_file):
             solution = generate_shortest_solution(*pair, wli=wli)
         except ValueError as e:
             print(e.args[0], file=sys.stderr)
+            print(-1)
         else:
             print(' -> '.join(solution), file=sys.stderr)
             print(len(solution) - 1)
