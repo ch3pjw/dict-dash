@@ -143,6 +143,8 @@ if __name__ == '__main__':
     if failed:
         sys.exit('Did not find solutions to all word pairs')
 
+# =============================================================================
+# Test code
 
 
 from unittest import TestCase
