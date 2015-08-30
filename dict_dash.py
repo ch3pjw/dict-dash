@@ -229,3 +229,10 @@ class TestDictionaryDash(TestCase):
         rungs_a = find_shortest_solution('bean', 'barn', self.wil)
         rungs_b = find_shortest_solution('barn', 'bean', self.wil)
         self.assertEqual(len(rungs_a), len(rungs_b))
+
+    def test_no_solution(self):
+        words = frozenset(('cog', 'dog', 'hit', 'hot', 'log'))
+        wil = build_words_by_indexed_letter(words)
+        self.assertRaisesRegex(
+            ValueError, 'No solution.*hot.*dog', find_shortest_solution, 'hot',
+            'dog', wil)
