@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Solves the HackerRank/Improbable "Dictionary Dash" problem.
 
