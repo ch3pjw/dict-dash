@@ -51,23 +51,30 @@ def parse_input(f):
     return words, pairs
 
 
-def get_words_by_letter_and_index(words):
-    words_by_letter_and_index = defaultdict(lambda: defaultdict(set))
+def build_words_by_indexed_letter(words):
+    '''Returns a structure of nested dicts keyed by letter index then letter,
+    mapping these to sets such that we can quickly find the set of all words
+    that have a given letter in a given position.
+
+    We hereafter refer to the "words by indexed letters" structure by the
+    acronym 'wil' for brevity.
+    '''
+    wil = defaultdict(lambda: defaultdict(set))
     for word in words:
         for i, letter in enumerate(word):
-            words_by_letter_and_index[i][letter].add(word)
-    return words_by_letter_and_index
+            wil[i][letter].add(word)
+    return wil
 
 
 @cache
-def find_similar_words(word, index, words_by_letter_and_index):
+def find_similar_words(word, index, wil):
     '''Finds all the words in our structured data who's index-th letter only is
     different from the given word
     '''
     similar_words = None  # FIXME: not so nice
     indexes = filter(lambda i: i != index, range(len(word)))
     for i in indexes:
-        considered_words = words_by_letter_and_index[i][word[i]]
+        considered_words = wil[i][word[i]]
         if similar_words is None:
             similar_words = considered_words - {word}
         else:
@@ -75,36 +82,36 @@ def find_similar_words(word, index, words_by_letter_and_index):
     return similar_words
 
 
-def generate_next_rung(nodes, used_words, wli):
+def generate_next_leaf_nodes(nodes, used_words, wil):
     for node in nodes:
         for i, letter in enumerate(node.value):
             similar_words = find_similar_words(
-                node.value, i, words_by_letter_and_index=wli)
+                node.value, i, wil=wil)
             yield from map(
                 lambda sw: Node(sw, parent=node),
                 filter(lambda sw: sw not in used_words, similar_words))
 
 
-def flatten_solution_node(node):
+def retrace_solution(node):
     yield node.value
     while node.parent:
         node = node.parent
         yield node.value
 
 
-def find_shortest_solution(start_word, end_word, wli):
+def find_shortest_solution(start_word, end_word, wil):
     used_words = {start_word}
-    rung_nodes = [Node(start_word, parent=None)]
+    leaf_nodes = [Node(start_word, parent=None)]
     while True:
-        next_rung_nodes = []
-        for node in generate_next_rung(rung_nodes, used_words, wli):
+        next_leaf_nodes = []
+        for node in generate_next_leaf_nodes(leaf_nodes, used_words, wil):
             if node.value == end_word:
-                return tuple(reversed(tuple(flatten_solution_node(node))))
+                return tuple(reversed(tuple(retrace_solution(node))))
             else:
-                next_rung_nodes.append(node)
+                next_leaf_nodes.append(node)
                 used_words.add(node.value)
-        if next_rung_nodes:
-            rung_nodes = next_rung_nodes
+        if next_leaf_nodes:
+            leaf_nodes = next_leaf_nodes
         else:
             raise ValueError(
                 'No solutions for {!r} -> {!r}'.format(start_word, end_word))
@@ -112,11 +119,11 @@ def find_shortest_solution(start_word, end_word, wli):
 
 def main(word_file):
     words, pairs = parse_input(word_file)
-    wli = get_words_by_letter_and_index(words)
+    wil = build_words_by_indexed_letter(words)
     failed = False
     for pair in pairs:
         try:
-            solution = find_shortest_solution(*pair, wli=wli)
+            solution = find_shortest_solution(*pair, wil=wil)
         except ValueError as e:
             print(e.args[0], file=sys.stderr)
             print(-1)
@@ -154,7 +161,7 @@ class TestDictionaryDash(TestCase):
     def setUp(self):
         if not self.words:
             self.words = load_word_data()
-            self.words_by_letter_and_index = get_words_by_letter_and_index(
+            self.wil = build_words_by_indexed_letter(
                 self.words)
         self.example_in_file = StringIO(
             '7\n'
@@ -178,7 +185,7 @@ class TestDictionaryDash(TestCase):
         )
         self.assertEqual(parse_input(self.example_in_file), expected)
 
-    def test_words_by_letter_and_index(self):
+    def test_words_by_indexed_letter(self):
         words = 'acceded', 'agisted', 'biscuit', 'cellist', 'firemen'
         expected = {
             0: {'a': {'acceded', 'agisted'},
@@ -194,7 +201,7 @@ class TestDictionaryDash(TestCase):
                 's': {'biscuit'},
                 'l': {'cellist'},
                 'r': {'firemen'}}}
-        result = get_words_by_letter_and_index(words)
+        result = build_words_by_indexed_letter(words)
         self.assertEqual(len(result), 7)
         for i in range(3):
             # In the interests of time and brevity
@@ -202,18 +209,19 @@ class TestDictionaryDash(TestCase):
 
     def test_similar_words(self):
         four_letter_words = load_word_data()
-        wli = get_words_by_letter_and_index(four_letter_words)
-        similar_words = find_similar_words('help', 3, wli)
+        wil = build_words_by_indexed_letter(four_letter_words)
+        similar_words = find_similar_words(
+            'help', 3, wil=wil)
         self.assertEqual(similar_words, {'held', 'hell', 'helm'})
 
     def test_simple_ladder(self):
-        solution = generate_shortest_solution(
-            'hell', 'help', self.words_by_letter_and_index)
-        self.assertEqual(solution, ('hell', 'help'))
+        solution = find_shortest_solution(
+            'helm', 'help', self.wil)
+        self.assertEqual(solution, ('helm', 'help'))
 
     def test_reverse_problem_len_equal(self):
-        rungs_a = generate_shortest_solution(
-            'bean', 'barn', self.words_by_letter_and_index)
-        rungs_b = generate_shortest_solution(
-            'barn', 'bean', self.words_by_letter_and_index)
+        rungs_a = find_shortest_solution(
+            'bean', 'barn', self.wil)
+        rungs_b = find_shortest_solution(
+            'barn', 'bean', self.wil)
         self.assertEqual(len(rungs_a), len(rungs_b))
