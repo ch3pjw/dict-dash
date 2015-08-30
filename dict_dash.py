@@ -74,15 +74,13 @@ def find_similar_words(word, index, words_by_letter_and_index):
 
 
 def generate_next_rung(nodes, used_words, wli):
-    new_nodes = []
     for node in nodes:
         for i, letter in enumerate(node.value):
             similar_words = find_similar_words(
                 node.value, i, words_by_letter_and_index=wli)
-            new_nodes.extend(map(
+            yield from map(
                 lambda sw: Node(sw, parent=node),
-                filter(lambda sw: sw not in used_words, similar_words)))
-    return new_nodes
+                filter(lambda sw: sw not in used_words, similar_words))
 
 
 def flatten_solution_node(node):
@@ -92,21 +90,22 @@ def flatten_solution_node(node):
         yield node.value
 
 
-def generate_shortest_solution(start, end, wli):
-    rungs = [{Node(start, parent=None)}]
-    used_words = {start}
-    solution = None
-    while not solution:
-        next_rung_nodes = generate_next_rung(rungs[-1], used_words, wli)
-        if not next_rung_nodes:
-            raise ValueError(
-                'No solutions for {!r} -> {!r}'.format(start, end))
-        used_words.update(map(lambda n: n.value, next_rung_nodes))
-        for node in next_rung_nodes:
-            if node.value == end:
+def find_shortest_solution(start_word, end_word, wli):
+    used_words = {start_word}
+    rung_nodes = [Node(start_word, parent=None)]
+    while True:
+        next_rung_nodes = []
+        for node in generate_next_rung(rung_nodes, used_words, wli):
+            if node.value == end_word:
                 return tuple(reversed(tuple(flatten_solution_node(node))))
+            else:
+                next_rung_nodes.append(node)
+                used_words.add(node.value)
+        if next_rung_nodes:
+            rung_nodes = next_rung_nodes
         else:
-            rungs.append(next_rung_nodes)
+            raise ValueError(
+                'No solutions for {!r} -> {!r}'.format(start_word, end_word))
 
 
 def main(word_file):
@@ -115,7 +114,7 @@ def main(word_file):
     failed = False
     for pair in pairs:
         try:
-            solution = generate_shortest_solution(*pair, wli=wli)
+            solution = find_shortest_solution(*pair, wli=wli)
         except ValueError as e:
             print(e.args[0], file=sys.stderr)
             print(-1)
