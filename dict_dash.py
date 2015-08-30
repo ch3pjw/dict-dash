@@ -9,6 +9,8 @@ we have added the end word and return the lineage of that node as the shortest
 solution. If at any point we have no more words to add to the tree, yet still
 have not reached the target word, we know we cannot find a solution and
 therefore raise an error.
+
+Tests and personal notes included after the code
 '''
 
 import sys
@@ -42,11 +44,12 @@ def cache(func):
 
 
 def parse_input(f):
-    'Parses the stdin data from hackerrank, assuming input is correct'
+    '''Parses the stdin data, assuming input is correct'''
     get = lambda: f.readline().strip()
     num_words = int(get())
     words = frozenset(get() for _ in range(num_words))
     num_pairs = int(get())
+    # The order of pairs is important for output correlation with input:
     pairs = tuple((get(), get()) for _ in range(num_pairs))
     return words, pairs
 
@@ -68,8 +71,8 @@ def build_words_by_indexed_letter(words):
 
 @cache
 def find_similar_words(word, index, wil):
-    '''Finds all the words in our structured data who's index-th letter only is
-    different from the given word
+    '''Finds all the words (using our pre-built structure) who's index-th
+    letter *only* is different from the given word.
     '''
     similar_words = None  # FIXME: not so nice
     indexes = filter(lambda i: i != index, range(len(word)))
@@ -83,6 +86,9 @@ def find_similar_words(word, index, wil):
 
 
 def generate_next_leaf_nodes(nodes, used_words, wil):
+    '''Lazily produces new tree nodes that are evolved from the current leaf
+    nodes.
+    '''
     for node in nodes:
         for i, letter in enumerate(node.value):
             similar_words = find_similar_words(
@@ -93,6 +99,9 @@ def generate_next_leaf_nodes(nodes, used_words, wil):
 
 
 def retrace_solution(node):
+    '''Backtracks the ancestry of a node from the tree, which represents a
+    soltuion state.
+    '''
     yield node.value
     while node.parent:
         node = node.parent
