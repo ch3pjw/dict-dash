@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict, namedtuple
 
 Node = namedtuple('Node', ('value', 'parent'))
@@ -54,8 +55,7 @@ def flatten_solution_node(node):
         yield node.value
 
 
-def generate_shortest_solution(start, end, words):
-    wli = get_words_by_letter_and_index(words)
+def generate_shortest_solution(start, end, wli):
     rungs = [{Node(start, parent=None)}]
     used_words = {start}
     solution = None
@@ -70,6 +70,23 @@ def generate_shortest_solution(start, end, words):
                 return tuple(reversed(tuple(flatten_solution_node(node))))
         else:
             rungs.append(next_rung_nodes)
+
+
+def main(word_file):
+    words, pairs = parse_input(word_file)
+    wli = get_words_by_letter_and_index(words)
+    for pair in pairs:
+        try:
+            solution = generate_shortest_solution(*pair, wli=wli)
+        except ValueError as e:
+            print(e.args[0], sys.stderr)
+        else:
+            print(' -> '.join(solution), file=sys.stderr)
+            print(len(solution) - 1)
+
+
+if __name__ == '__main__':
+    main(sys.stdin)
 
 
 from unittest import TestCase
@@ -87,8 +104,14 @@ def load_word_data():
 
 
 class TestDictionaryDash(TestCase):
-    def test_parse_input(self):
-        in_file = StringIO(
+    words = None
+
+    def setUp(self):
+        if not self.words:
+            self.words = load_word_data()
+            self.words_by_letter_and_index = get_words_by_letter_and_index(
+                self.words)
+        self.example_in_file = StringIO(
             '7\n'
             'cog\n'
             'dog\n'
@@ -102,11 +125,13 @@ class TestDictionaryDash(TestCase):
             'dog\n'
             'hit\n'
             'cog\n')
+
+    def test_parse_input(self):
         expected = (
             frozenset(('cog', 'dog', 'dot', 'hit', 'hot', 'log', 'lot')),
-            frozenset((('hot', 'dog'), ('hit', 'cog'))),
+            tuple((('hot', 'dog'), ('hit', 'cog'))),
         )
-        self.assertEqual(parse_input(in_file), expected)
+        self.assertEqual(parse_input(self.example_in_file), expected)
 
     def test_words_by_letter_and_index(self):
         words = 'acceded', 'agisted', 'biscuit', 'cellist', 'firemen'
@@ -137,12 +162,13 @@ class TestDictionaryDash(TestCase):
         self.assertEqual(similar_words, {'held', 'hell', 'helm'})
 
     def test_simple_ladder(self):
-        words = load_word_data()
-        solution = generate_shortest_solution('hell', 'help', words)
+        solution = generate_shortest_solution(
+            'hell', 'help', self.words_by_letter_and_index)
         self.assertEqual(solution, ('hell', 'help'))
 
     def test_reverse_problem_len_equal(self):
-        words = load_word_data()
-        rungs_a = generate_shortest_solution('bean', 'barn', words)
-        rungs_b = generate_shortest_solution('barn', 'bean', words)
+        rungs_a = generate_shortest_solution(
+            'bean', 'barn', self.words_by_letter_and_index)
+        rungs_b = generate_shortest_solution(
+            'barn', 'bean', self.words_by_letter_and_index)
         self.assertEqual(len(rungs_a), len(rungs_b))
