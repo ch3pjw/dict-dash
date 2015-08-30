@@ -10,7 +10,7 @@ def parse_input(f):
     num_words = int(get())
     words = frozenset(get() for _ in range(num_words))
     num_pairs = int(get())
-    pairs = frozenset((get(), get()) for _ in range(num_pairs))
+    pairs = tuple((get(), get()) for _ in range(num_pairs))
     return words, pairs
 
 
