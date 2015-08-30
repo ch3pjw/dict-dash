@@ -1,3 +1,14 @@
+'''
+Solves the HackerRank/Improbable "Dictionary Dash" problem.
+
+The general approach is to evolve a tree of possible solutions growing from the
+starting word by iteratively adding "similar words" (one letter different)
+breadth-first to the tree's leaf nodes. We stop adding to the tree as soon as
+we have added the end word and return that as the shortest solution. If at any
+point we have no more words to add to the tree, yet still have not reached the
+target word, we know we cannot find a solution and therefore raise an error.
+'''
+
 import sys
 from functools import wraps
 from itertools import starmap
