@@ -164,8 +164,12 @@ class TestDictionaryDash(TestCase):
 
     def setUp(self):
         if not self.words:
-            self.words = load_word_data()
-            self.wil = build_words_by_indexed_letter(
+            # Can't define these at class level up-front, as there is no word
+            # data on the HackerRangk server, which precludes loading it at
+            # definition time. Also, loading at definition time is not great
+            # anyway.
+            self.__class__.words = load_word_data()
+            self.__class__.wil = build_words_by_indexed_letter(
                 self.words)
         self.example_in_file = StringIO(
             '7\n'
@@ -212,10 +216,7 @@ class TestDictionaryDash(TestCase):
             self.assertEqual(result[i], expected[i])
 
     def test_similar_words(self):
-        four_letter_words = load_word_data()
-        wil = build_words_by_indexed_letter(four_letter_words)
-        similar_words = find_similar_words(
-            'help', 3, wil=wil)
+        similar_words = find_similar_words('help', 3, wil=self.wil)
         self.assertEqual(similar_words, {'held', 'hell', 'helm'})
 
     def test_simple_ladder(self):
