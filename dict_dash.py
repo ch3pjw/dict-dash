@@ -28,12 +28,12 @@ def cache(func):
         # we'll just check the IDs in the kwargs, pass mutables by keyword and
         # trust the caller not to change them.
         kwarg_ids = frozenset(starmap(lambda k, v: (k, id(v)), kwargs.items()))
-        cache_id = args, kwarg_ids
+        cache_key = args, kwarg_ids
         try:
-            return results_by_args[cache_id]
+            return results_by_args[cache_key]
         except KeyError:
             result = func(*args, **kwargs)
-            results_by_args[cache_id] = result
+            results_by_args[cache_key] = result
             return result
     return wrapped
 
