@@ -161,6 +161,7 @@ def load_word_data():
 
 class TestDictionaryDash(TestCase):
     words = None
+    wil = None
 
     def setUp(self):
         if not self.words:
