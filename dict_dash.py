@@ -74,15 +74,8 @@ def find_similar_words(word, index, wil):
     '''Finds all the words (using our pre-built structure) who's index-th
     letter *only* is different from the given word.
     '''
-    similar_words = None  # FIXME: not so nice
     indexes = filter(lambda i: i != index, range(len(word)))
-    for i in indexes:
-        considered_words = wil[i][word[i]]
-        if similar_words is None:
-            similar_words = considered_words - {word}
-        else:
-            similar_words &= considered_words
-    return similar_words
+    return set.intersection(*(wil[i][word[i]] for i in indexes)) - {word}
 
 
 def generate_next_leaf_nodes(nodes, used_words, wil):
