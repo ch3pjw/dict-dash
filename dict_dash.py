@@ -48,7 +48,6 @@ def build_words_by_indexed_letter(words):
 
 def cache(func):
     '''Decorator to provide simple non-expiring result caching to a function'''
-    results_by_args = {}
 
     @wraps(func)
     def wrapped(*args, **kwargs):
@@ -58,11 +57,13 @@ def cache(func):
         # I'm just going to pass in kwargs that I know won't change.
         cache_key = args
         try:
-            return results_by_args[cache_key]
+            return wrapped._results_by_args[cache_key]
         except KeyError:
             result = func(*args, **kwargs)
-            results_by_args[cache_key] = result
+            wrapped._results_by_args[cache_key] = result
             return result
+    # Hook to allow us to reset the cache for unit testing:
+    wrapped._results_by_args = {}
     return wrapped
 
 
