@@ -15,7 +15,6 @@ Tests and personal notes included after the code
 
 import sys
 from functools import wraps
-from itertools import starmap
 from collections import defaultdict, namedtuple
 
 Node = namedtuple('Node', ('value', 'parent'))
