@@ -176,23 +176,23 @@ class TestDictionaryDash(TestCase):
             self.__class__.wil = build_words_by_indexed_letter(
                 self.words)
         self.example_in_file = StringIO(
-            '7\n'
+            '6\n'
             'cog\n'
             'dog\n'
             'dot\n'
             'hit\n'
             'hot\n'
             'log\n'
-            'lot\n'
             '2\n'
             'hot\n'
             'dog\n'
             'hit\n'
             'cog\n')
+        find_similar_words._results_by_args = {}
 
     def test_parse_input(self):
         expected = (
-            frozenset(('cog', 'dog', 'dot', 'hit', 'hot', 'log', 'lot')),
+            frozenset(('cog', 'dog', 'dot', 'hit', 'hot', 'log')),
             tuple((('hot', 'dog'), ('hit', 'cog'))),
         )
         self.assertEqual(parse_input(self.example_in_file), expected)
@@ -216,7 +216,7 @@ class TestDictionaryDash(TestCase):
         result = build_words_by_indexed_letter(words)
         self.assertEqual(len(result), 7)
         for i in range(3):
-            # In the interests of time and brevity
+            # In the interests of time and brevity, only test the first three
             self.assertEqual(result[i], expected[i])
 
     def test_similar_words(self):
@@ -238,3 +238,21 @@ class TestDictionaryDash(TestCase):
         self.assertRaisesRegex(
             ValueError, 'No solution.*hot.*dog', find_shortest_solution, 'hot',
             'dog', wil)
+
+    def test_main_success(self):
+        stdout = StringIO()
+        stderr = StringIO()
+        failed = main(self.example_in_file, stdout, stderr)
+        self.assertFalse(failed)
+        self.assertEqual(stdout.getvalue(), '2\n4\n')
+        self.assertEqual(
+            stderr.getvalue(),
+            'hot -> dot -> dog\nhit -> hot -> dot -> dog -> cog\n')
+
+    def test_main_failure(self):
+        stdin = StringIO('1\nword\n1\nword\ngone\n')
+        stdout = StringIO()
+        stderr = StringIO()
+        failed = main(stdin, stdout, stderr)
+        self.assertTrue(failed)
+        self.assertEqual(stdout.getvalue(), '-1\n')
