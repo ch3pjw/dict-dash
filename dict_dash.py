@@ -18,6 +18,7 @@ Node = namedtuple('Node', ('value', 'parent'))
 
 
 def cache(func):
+    '''Decorator to provide simple non-expiring result caching to a function'''
     results_by_args = {}
 
     @wraps(func)
