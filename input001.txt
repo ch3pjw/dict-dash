@@ -1,0 +1,13 @@
+7
+cog
+dog
+dot
+hit
+hot
+log
+lot
+2
+hot
+dog
+hit
+cog
