@@ -21,28 +21,6 @@ from collections import defaultdict, namedtuple
 Node = namedtuple('Node', ('value', 'parent'))
 
 
-def cache(func):
-    '''Decorator to provide simple non-expiring result caching to a function'''
-    results_by_args = {}
-
-    @wraps(func)
-    def wrapped(*args, **kwargs):
-        # Note: Python does not have a built in frozendict. In production, I'd
-        # use something like pyrsistent.map to make the intermediate data
-        # structure hashable and therefore safely cacheable, but for this,
-        # we'll just check the IDs in the kwargs, pass mutables by keyword and
-        # trust the caller not to change them.
-        kwarg_ids = frozenset(starmap(lambda k, v: (k, id(v)), kwargs.items()))
-        cache_key = args, kwarg_ids
-        try:
-            return results_by_args[cache_key]
-        except KeyError:
-            result = func(*args, **kwargs)
-            results_by_args[cache_key] = result
-            return result
-    return wrapped
-
-
 def parse_input(f):
     '''Parses the stdin data, assuming input is correct'''
     get = lambda: f.readline().strip()
@@ -67,6 +45,26 @@ def build_words_by_indexed_letter(words):
         for i, letter in enumerate(word):
             wil[i][letter].add(word)
     return wil
+
+
+def cache(func):
+    '''Decorator to provide simple non-expiring result caching to a function'''
+    results_by_args = {}
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        # Note: Python does not have a built in frozendict. In production, I'd
+        # use something like pyrsistent.map to make the intermediate wil data
+        # structure hashable and therefore safely cacheable, but for this code,
+        # I'm just going to pass in kwargs that I know won't change.
+        cache_key = args
+        try:
+            return results_by_args[cache_key]
+        except KeyError:
+            result = func(*args, **kwargs)
+            results_by_args[cache_key] = result
+            return result
+    return wrapped
 
 
 @cache
