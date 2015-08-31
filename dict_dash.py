@@ -256,3 +256,85 @@ class TestDictionaryDash(TestCase):
         failed = main(stdin, stdout, stderr)
         self.assertTrue(failed)
         self.assertEqual(stdout.getvalue(), '-1\n')
+
+
+# =============================================================================
+# Personal notes
+#
+# How did you approach the problem?
+#
+#   I'm presuming that you're interested in the thought processes that led me
+#   to my submitted solution. Apologies if this is a wild tangent!
+#
+#   My first thoughts were along the lines of "I need to explore the possible
+#   space of solutions efficiently. What constraints do I have?". I quickly
+#   started trying to index the word list, as I knew I would need to search it
+#   efficiently. Although I hadn't got the whole shape of the code in my head
+#   at that point, I used that data structure to spark thoughts about what kind
+#   of actions my searching would endtail.
+#
+#   My initial solution was just to build up a kind of "meta word ladder", in
+#   which every rung contained the set of all possibilities that extended out
+#   from the rung preceding it. That gave me the right answers in the sample
+#   case, but I was nervous about not being able to prove the correctness of
+#   the answer without an actual chain/evolution history. Also, I wanted to see
+#   the chain on stderr, because that was kinda fun.
+#
+#   One idea I'd had whilst writing that initial solution was to build a graph
+#   of all of the possible single-letter changes between words. I'd discounted
+#   it because it felt like generating the structure was harder/more wasteful
+#   than solving the problem, but came back to it as I wanted the whole chain
+#   as part of the solution. That idea evolved into generating the graph lazily
+#   and bailing when I found a solution.
+#
+#   Once the shape had settled to something that worked and didn't seem to
+#   wasteful, I set about cleaning up, adding some more tests and optimising.
+#
+#
+# How did you check that your solution is correct and efficient?
+#
+#   I wrote most of the test code as I was assembling the various layers of
+#   functionality (file parser, indexed word structure, similar word generation
+#   and so on), verifying as I went that my code was behaving as intended.  I
+#   didn't strictly or comprehensively TDD it, as I was playing around with
+#   various nascent ideas in tandem with shaping the code and testing it.
+#
+#   I struggled a bit knowing how to prove overall correctness, as I kinda
+#   needed a correct implementation to run against to generate test cases! I
+#   settled for corroborating a few solutions against online word ladder
+#   generators, adjusting for words missing from my system's dict file, and
+#   enshrining a couple of word ladders in unit tests.
+#
+#   For profiling, I just used output from python cProfile and ipython %prun
+#   to find bottlenecks and executed bits of my code or trial functions to test
+#   the speed of potential optimisations. I made sure I'd got test coverage of
+#   correct code before optimising! Some optimisation of my early code
+#   included:
+#    - Noting that find_similar_words was by far the bottle kneck and
+#      optimising with a call to set.intersection that pushed a lot of the set
+#      manipulation into the C.
+#    - Caching the results for similar words, so subsequent runs didn't use the
+#      computationally heavy code again.
+#    - Turning generate_next_leaf_nodes into an actual generator function, so
+#      that we didn't pre-compute too many possibilities before cutting short
+#      once we'd found a solution.
+#    - Checking that a filter was quicker than computing a set difference
+#
+#   To tidy up, I ran the unittest with coverage and plugged any gaps (mostly
+#   main). The coverage report says 100%, but that *must* be dodgy, because
+#   under nosetests it won't be executing the statements inside the
+#   `if __name__ == '__main__'` conditional. I've seen this problem on my
+#   machine before, but don't have time to debug the coverage tool.
+#
+# Assumptions:
+#
+# I've tried to state assumptions through the actual code. The biggest
+# assumption I've made is that the breadth first search is the best/only way to
+# go about generating a good solution.
+#
+# There are a whole bunch of problems that can arise from bad input
+# (non-lower-case-ASCII chars, mixed word lengths, duplicated words, pairs that
+# reference non-dict words and so on), but that clutters readability for the
+# example case and doesn't seem to be a core part of the problem, so this code
+# just assumes the input is good. Also, I think in the listed cases, this code
+# would still handle things reasonably well.
